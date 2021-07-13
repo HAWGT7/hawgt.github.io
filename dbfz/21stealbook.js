@@ -256,7 +256,7 @@ var dbfz = (function () {
                     usedMoves.push(copiedSlots[currentSlot]);
                     if (moveChains[copiedSlots[currentSlot]].forceCloseToGround == true) closeToGround = true;
                     if (moveChains[copiedSlots[currentSlot]].requiresCloseToGround == true) requiresCloseToGround = true;
-                    if (requiresCloseToGround && !closeToGround && moveChains[copiedSlots[currentSlot]].teleport != true && !smashOnlyCombo) {
+                    if (requiresCloseToGround && !closeToGround && !moveChains[copiedSlots[currentSlot]].teleport && !smashOnlyCombo) {
                         requiresCloseToGround = false;
                         route += " (Enemy is close to the ground) ";
                     }
