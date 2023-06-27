@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8" />
+        <title>Choo Chewer</title>
+    </head>
+    <body>
+        <main>
+            <h1>Choo Chewer</h1>
+            <input type="file" id="input" />
+            <br />
+			<br />
+			<label for="Brightness">Brightness</label>
+			<input type="range" min="0" max="255" value="0" class="slider" id="Brightness" onchange="update()" oninput="this.nextElementSibling.value = this.value">
+			<output>0</output>
+			<br />
+			<br />
+			<label for="Outline">Outline</label>
+			<input type="checkbox" id="Outline" onchange="update()">
+            <br />
+			<br />
+            <canvas id="Canvas" class="video"></canvas>
+        </main>
+        <script type="text/javascript">
+            canvas = document.getElementById("Canvas")
+            context = canvas.getContext("2d")
+			brightness = document.getElementById("Brightness")
+			outline = document.getElementById("Outline")
+
+            var image, lowest, highest, originalData
+
+			function update()
+			{
+				if (originalData == undefined) return
+				imageDataCopy = new ImageData(
+					new Uint8ClampedArray(originalData),
+					canvas.width,
+					canvas.height
+				)
+				context.putImageData(imageDataCopy, 0, 0)
+				convert()
+			}
+
+            function convert() {
+				lowest = 255
+				highest = 0
+				
+                canvas.width = image.width
+                canvas.height = image.height
+
+                context.drawImage(image, 0, 0)
+
+                var imageData = context.getImageData(0, 0, canvas.width, canvas.height)
+				
+				originalData = [...imageData.data]
+				
+				for (var i = 0; i < imageData.data.length; i += 4) {
+                    color = ((imageData.data[i] + imageData.data[i + 1] + imageData.data[i + 2]) / 3)
+					solid = imageData.data[i + 3] !== 0
+					if (!solid) continue
+                    if (color < lowest) lowest = color
+                    if (color > highest) highest = color
+                }
+				
+                for (var i = 0; i < imageData.data.length; i += 4) {
+                    solid = imageData.data[i + 3] !== 0
+                    color = (truncate(tweak((imageData.data[i] * 0.299 + imageData.data[i + 1] * 0.587 + imageData.data[i + 2] * 0.114)) + (parseInt(brightness.value) & 255)) & 192) / 192 * 255
+					
+                    imageData.data[i] = solid ? color : 163
+                    imageData.data[i + 1] = solid ? color : 73
+                    imageData.data[i + 2] = solid ? 0 : 163
+                    imageData.data[i + 3] = 255
+					
+					if (!solid || !outline.checked) continue
+					
+					up = i - 4 * canvas.width
+					left = i - 4
+					down = i + 4 * canvas.width
+					right = i + 4
+					
+					if
+					(
+						(up > 0 && (imageData.data[up + 3] === 0 || (imageData.data[up] == 163 && imageData.data[up + 1] == 73 && imageData.data[up + 2] == 163)))
+						||
+						(left > 0 && i % canvas.width != 0 && (imageData.data[left + 3] === 0 || (imageData.data[left] == 163 && imageData.data[left + 1] == 73 && imageData.data[left + 2] == 163)))
+						||
+						(down < imageData.data.length && (imageData.data[down + 3] === 0 || (imageData.data[down] == 163 && imageData.data[down + 1] == 73 && imageData.data[down + 2] == 163)))
+						||
+						(right < imageData.data.length && i % canvas.width != canvas.width - 1 && (imageData.data[right + 3] === 0 || (imageData.data[right] == 163 && imageData.data[right + 1] == 73 && imageData.data[right + 2] == 163)))
+					)
+					{
+						imageData.data[i] = 0
+						imageData.data[i + 1] = 0
+						imageData.data[i + 2] = 0
+					}
+                }
+
+                context.putImageData(imageData, 0, 0)
+            }
+
+            function handleFiles(e) {
+                var URL = window.webkitURL || window.URL
+                var url = URL.createObjectURL(e.target.files[0])
+                image = new Image()
+                image.onload = function () {
+                    convert()
+                }
+                image.src = url
+            }
+
+            window.onload = function () {
+                var input = document.getElementById("input")
+                input.addEventListener("change", handleFiles, false)
+            }
+			
+			function tweak(color)
+			{
+				return (color - lowest) / (highest - lowest) * 255
+			}
+			
+			function truncate(color)
+			{
+				return Math.min(255, Math.max(color, 0))
+			}
+        </script>
+    </body>
+</html>

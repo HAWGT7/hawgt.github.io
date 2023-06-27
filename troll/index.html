@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="utf-8">
+    <title>.</title>
+    <style>
+        body {
+            margin: 0
+        }
+    </style>
+</head>
+<body>
+<script type="module">
+
+		import * as THREE from 'https://cdnjs.cloudflare.com/ajax/libs/three.js/r99/three.module.js';
+
+		const FOV = 120
+        const MIN_CLIPPING = 0.1
+        const MAX_CLIPPING = 10000
+
+        const scene = new THREE.Scene()
+        const camera = new THREE.PerspectiveCamera(FOV, window.innerWidth / window.innerHeight, MIN_CLIPPING, MAX_CLIPPING)
+        const textureLoader = new THREE.TextureLoader()
+		textureLoader.crossOrigin = "Anonymous"
+		
+		const imageURL = 'https://avatars.cloudflare.steamstatic.com/012e46c43333a8f27f802ef9b4e9696f81a9590d_full.jpg'
+		const imageTexture = textureLoader.load(imageURL)
+		
+		
+		
+		camera.position.set(0, 0, 1)
+
+        const renderer = new THREE.WebGLRenderer()
+        renderer.setSize(window.innerWidth, window.innerHeight)
+        document.body.appendChild(renderer.domElement)
+
+		const geometry = new THREE.BoxGeometry( 1, 1, 1 )
+		const material = new THREE.MeshBasicMaterial( {map: imageTexture} )
+		const cube = new THREE.Mesh( geometry, material )
+		scene.add( cube )
+		
+		var clock = new THREE.Clock();
+		
+		function animate() {
+            requestAnimationFrame(animate)
+			let angle = clock.getDelta() * 90
+			cube.rotation.x += degreesToRad(angle)
+			cube.rotation.y += degreesToRad(angle)
+			cube.rotation.z += degreesToRad(angle)
+            renderer.render(scene, camera)
+        }
+        animate()
+		
+		function degreesToRad(angle) {
+            return angle * (Math.PI / 180)
+        }
+</script>
+</body>
+</html>
