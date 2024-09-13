@@ -62,9 +62,7 @@ var dbfz = (function () {
             next: 1
         },
         "Ground Sticky Energy Blast": {
-            next: 0,
-            grab: true,
-            whiffNext: true
+            next: 0
         },
         "Ground Barrier Sphere": {
             next: 0,
@@ -100,9 +98,7 @@ var dbfz = (function () {
             next: 1
         },
         "Aerial Sticky Energy Blast": {
-            next: 1,
-            grab: true,
-            canWhiffIfUsed: ["Ground Consecutive Energy Blast"]
+            next: 1
         },
         "Aerial Barrier Sphere": {
             next: 1,
@@ -223,8 +219,6 @@ var dbfz = (function () {
         let currentSlot;
         let comboLength;
         let copiedSlots = [];
-        let grabbed;
-        let whiffNext;
         let usedMoves = [];
         let emptyArr = [];
         let lastMove;
@@ -237,8 +231,6 @@ var dbfz = (function () {
             comboLength = 0;
             currentSlot = a;
             lastMoveSlot = a;
-            grabbed = false;
-            whiffNext = false;
             lastMove = false;
             closeToGround = false;
             requiresCloseToGround = false;
@@ -250,7 +242,7 @@ var dbfz = (function () {
                 if (copiedSlots[currentSlot] == "Empty") comboLength = 5;
                 if (comboLength > 4) {
                     if (route != "") routes.push(route);
-                } else if (canComboIfUsedMet(currentSlot, copiedSlots, usedMoves, whiffNext) && (whiffNext || !grabbed || copiedSlots[currentSlot].grab == undefined)) {
+                } else if (canComboIfUsedMet(currentSlot, copiedSlots, usedMoves)) {
                     if (comboLength != 0) route += " -> ";
                     route += copiedSlots[currentSlot];
                     usedMoves.push(copiedSlots[currentSlot]);
@@ -260,9 +252,6 @@ var dbfz = (function () {
                         requiresCloseToGround = false;
                         route += " (Enemy is close to the ground) ";
                     }
-                    if (whiffNext == true && moveChains[copiedSlots[currentSlot]].grab == true) route += " (Whiff) ";
-                    if (moveChains[copiedSlots[currentSlot]].grab == true) grabbed = true;
-                    if (moveChains[copiedSlots[currentSlot]].whiffNext == true) whiffNext = true;
                     lastMoveSlot = currentSlot;
                     currentSlot = moveChains[copiedSlots[currentSlot]].next;
                     copiedSlots[lastMoveSlot] = "Empty";
@@ -290,24 +279,17 @@ var dbfz = (function () {
     }
 
 
-    function canComboIfUsedMet(currentSlot, copiedSlots, usedMoves, whiffNext) {
-        let found1 = false;
-        let found2 = false;
-        if (moveChains[copiedSlots[currentSlot]].canWhiffIfUsed != undefined && whiffNext) {
-            moveChains[copiedSlots[currentSlot]].canWhiffIfUsed.forEach(required => {
-                if (usedMoves.includes(required)) found1 = true; //return here is the return value for the forEach and not the function...
-            });
-        } else {
-            found1 = true;
-        }
+    function canComboIfUsedMet(currentSlot, copiedSlots, usedMoves) {
+        let found = false;
+
         if (moveChains[copiedSlots[currentSlot]].canComboIfUsed != undefined) {
             moveChains[copiedSlots[currentSlot]].canComboIfUsed.forEach(required => {
-                if (usedMoves.includes(required)) found2 = true; //return here is the return value for the forEach and not the function...
+                if (usedMoves.includes(required)) found = true; //return here is the return value for the forEach and not the function...
             });
         } else {
-            found2 = true;
+            found = true;
         }
-        return found1 && found2;
+        return found;
     }
 
     function canComboAfter(currentSlot, copiedSlots, usedMoves) {
@@ -383,15 +365,9 @@ var dbfz = (function () {
         let cssClass = !small ? "stealRouteIcon" : "stealAllRouteIcon";
         let movesArray = moves.split(" -> ");
         let movesHTML = "<tr><td>";
-        let whiffStr = "";
         let closeToGroundStr = "";
         let conditionStr = "";
         movesArray.forEach(m => {
-            if (m.includes("(Whiff)")) {
-                whiffStr = " (Whiff) ";
-            } else {
-                whiffStr = " ";
-            }
             if (m.includes("(Enemy is close to the ground)")) {
                 closeToGroundStr = " (Enemy is close to the ground) ";
             } else {
@@ -404,7 +380,7 @@ var dbfz = (function () {
             } else {
                 conditionStr = " ";
             }
-            movesHTML += conditionStr + whiffStr + closeToGroundStr + m.substring(0, 6) + " <img class='" + cssClass + "' src='./images/steals/" + m.replace("(Enemy is close to the ground)", "").replace("Ground", "").replace("Aerial", "").replace("(Whiff)", "").replace("(2H)", "").replace("(5H Midscreen)", "").replace(/\s/g, "") + ".png'>";
+            movesHTML += conditionStr + closeToGroundStr + m.substring(0, 6) + " <img class='" + cssClass + "' src='./images/steals/" + m.replace("(Enemy is close to the ground)", "").replace("Ground", "").replace("Aerial", "").replace("(2H)", "").replace("(5H Midscreen)", "").replace(/\s/g, "") + ".png'>";
 
         });
         movesHTML += " Aproximate Damage: " + getDamage(moves) + "</td></tr>";
